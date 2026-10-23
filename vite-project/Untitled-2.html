@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LeafTriage</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f7f2;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #2e7d32;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 450px;
+            margin: 30px auto;
+            background-color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #2e7d32;
+            text-align: center;
+        }
+
+        .language {
+            margin-bottom: 20px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .upload {
+            text-align: center;
+            padding: 20px;
+            border: 2px dashed #4caf50;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            margin-top: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: #2e7d32;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #1b5e20;
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 10px;
+        }
+
+        .confidence {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        .warning {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff3cd;
+            border-radius: 10px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: gray;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>🍃 LeafTriage</h1>
+    <p>Offline Crop Disease Triage</p>
+</header>
+
+<div class="container">
+
+    <h2>Check Your Crop Leaf</h2>
+
+    <!-- Language Selection -->
+    <div class="language">
+        <label>Select Language:</label>
+
+        <select>
+            <option>English</option>
+            <option>Tamil</option>
+            <option>Hindi</option>
+            <option>Telugu</option>
+        </select>
+    </div>
+
+
+    <!-- Leaf Image Upload -->
+    <div class="upload">
+
+        <h3>📷 Capture Leaf</h3>
+
+        <p>Take a photo or upload a leaf image</p>
+
+        <input type="file"
+               accept="image/*"
+               capture="environment">
+
+    </div>
+
+
+    <!-- Analyze Button -->
+    <button>
+        🔍 Analyze Leaf
+    </button>
+
+
+    <!-- Example Prediction Result -->
+    <div class="result">
+
+        <h3>Prediction Result</h3>
+
+        <p>
+            Disease:
+            <strong>Early Blight</strong>
+        </p>
+
+        <p class="confidence">
+            Confidence: 85%
+        </p>
+
+        <p>
+            Possible Matches:
+        </p>
+
+        <ul>
+            <li>Early Blight - 85%</li>
+            <li>Leaf Spot - 10%</li>
+            <li>Healthy - 5%</li>
+        </ul>
+
+        <button>
+            🔊 Listen to Guidance
+        </button>
+
+        <button>
+            📖 View Advice & Source
+        </button>
+
+    </div>
+
+
+    <!-- Low Confidence Example -->
+    <div class="warning">
+
+        <h3>⚠ Prediction Uncertain</h3>
+
+        <p>
+            Confidence is low. Expert review is recommended.
+        </p>
+
+        <button>
+            💾 Save Case Offline
+        </button>
+
+        <button>
+            👨‍🌾 Send to Expert
+        </button>
+
+    </div>
+
+</div>
+
+
+<footer>
+    <p>LeafTriage - Smart Agriculture</p>
+</footer>
+
+</body>
+</html>

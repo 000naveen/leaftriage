@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>LeafTriage - Automatic Leaf Analysis</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    min-height: 100vh;
+}
+
+header {
+    background: #1b5e20;
+    color: white;
+    text-align: center;
+    padding: 25px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 38px;
+}
+
+.container {
+    width: 650px;
+    max-width: 94%;
+    margin: 30px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.18);
+}
+
+h2 {
+    text-align: center;
+    color: #1b5e20;
+}
+
+label {
+    display: block;
+    margin-top: 18px;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+select,
+input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    background: white;
+}
+
+#preview {
+    display: none;
+    width: 250px;
+    height: 250px;
+    object-fit: contain;
+    margin: 20px auto;
+    border: 3px solid #4caf50;
+    border-radius: 15px;
+    background: #f5f5f5;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 9px;
+    background: #2e7d32;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1b5e20;
+}
+
+#loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    color: #1b5e20;
+    font-weight: bold;
+}
+
+#result {
+    display: none;
+    margin-top: 30px;
+    padding: 22px;
+    background: #f1f8e9;
+    border-left: 6px solid #2e7d32;
+    border-radius: 10px;
+}
+
+.result-image-box {
+    text-align: center;
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+}
+
+#resultImage {
+    display: block;
+    width: 230px;
+    height: 230px;
+    object-fit: contain;
+    margin: 15px auto 0;
+    border: 3px solid #4caf50;
+    border-radius: 15px;
+}
+
+.result-row {
+    padding: 14px 0;
+    border-bottom: 1px solid #ddd;
+    overflow: hidden;
+}
+
+.result-row strong {
+    color: #333;
+}
+
+.output {
+    float: right;
+    max-width: 55%;
+    text-align: right;
+    font-weight: bold;
+    color: #1b5e20;
+}
+
+#diseaseOutput {
+    color: #c62828;
+}
+
+#damageOutput {
+    color: #e65100;
+}
+
+#confidenceOutput {
+    color: #1565c0;
+}
+
+.confidence-container {
+    width: 100%;
+    height: 24px;
+    background: #ddd;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+#confidenceBar {
+    width: 0%;
+    height: 100%;
+    background: #4caf50;
+    transition: width 0.8s;
+}
+
+.guidance {
+    margin-top: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    line-height: 1.6;
+}
+
+.note {
+    margin-top: 20px;
+    padding: 12px;
+    background: #fff8e1;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+canvas {
+    display: none;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #555;
+}
+
+@media(max-width: 600px) {
+
+    header h1 {
+        font-size: 30px;
+    }
+
+    .container {
+        padding: 20px;
+    }
+
+    .output {
+        float: none;
+        display: block;
+        max-width: 100%;
+        text-align: left;
+        margin-top: 6px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🍃 LeafTriage</h1>
+    <p id="subtitle">Automatic Leaf Image Analysis</p>
+</header>
+
+
+<div class="container">
+
+    <h2 id="title">🌿 Leaf Image Analysis</h2>
+
+
+    <!-- LANGUAGE -->
+
+    <label id="languageLabel">
+        🌐 Select Language
+    </label>
+
+    <select
+        id="language"
+        onchange="changeLanguage()"
+    >
+        <option value="en">English</option>
+        <option value="ta">தமிழ்</option>
+        <option value="te">తెలుగు</option>
+    </select>
+
+
+    <!-- IMAGE -->
+
+    <label id="imageLabel">
+        📷 Upload Leaf Image
+    </label>
+
+    <input
+        type="file"
+        id="leafImage"
+        accept="image/*"
+        onchange="previewImage()"
+    >
+
+    <img
+        id="preview"
+        alt="Leaf Preview"
+    >
+
+    <canvas id="canvas"></canvas>
+
+
+    <!-- ANALYZE BUTTON -->
+
+    <button
+        id="analyzeButton"
+        onclick="analyzeLeaf()"
+    >
+        🔍 Analyze Leaf
+    </button>
+
+
+    <!-- LOADING -->
+
+    <div id="loading">
+        🔄 Analyzing leaf image...
+    </div>
+
+
+    <!-- RESULT -->
+
+    <div id="result">
+
+        <h2 id="resultTitle">
+            🌿 Analysis Result
+        </h2>
+
+
+        <!-- RESULT IMAGE -->
+
+        <div class="result-image-box">
+
+            <strong id="resultImageLabel">
+                📷 Analyzed Leaf Image
+            </strong>
+
+            <img
+                id="resultImage"
+                alt="Analyzed Leaf"
+            >
+
+        </div>
+
+
+        <!-- LEAF COLOR -->
+
+        <div class="result-row">
+
+            <strong id="colorLabel">
+                🎨 Leaf Color:
+            </strong>
+
+            <span
+                class="output"
+                id="colorOutput"
+            >
+                --
+            </span>
+
+        </div>
+
+
+        <!-- SYMPTOM -->
+
+        <div class="result-row">
+
+            <strong id="symptomLabel">
+                🔍 Detected Symptom:
+            </strong>
+
+            <span
+                class="output"
+                id="symptomOutput"
+            >
+                --
+            </span>
+
+        </div>
+
+
+        <!-- DAMAGE LEVEL -->
+
+        <div class="result-row">
+
+            <strong id="damageLabel">
+                ⚠️ Damage Level:
+            </strong>
+
+            <span
+                class="output"
+                id="damageOutput"
+            >
+                --
+            </span>
+
+        </div>
+
+
+        <!-- DISEASE -->
+
+        <div class="result-row">
+
+            <strong id="diseaseLabel">
+                🦠 Predicted Disease:
+            </strong>
+
+            <span
+                class="output"
+                id="diseaseOutput"
+            >
+                --
+            </span>
+
+        </div>
+
+
+        <!-- ANALYSIS VALUE -->
+
+        <div class="result-row">
+
+            <strong id="predictionLabel">
+                📊 Analysis Value:
+            </strong>
+
+            <span
+                class="output"
+                id="predictionOutput"
+            >
+                --
+            </span>
+
+        </div>
+
+
+        <!-- IMAGE SCORE -->
+
+        <div class="result-row">
+
+            <strong id="confidenceLabel">
+                📈 Image Analysis Score:
+            </strong>
+
+            <span
+                class="output"
+                id="confidenceOutput"
+            >
+                --
+            </span>
+
+        </div>
+
+
+        <!-- SCORE BAR -->
+
+        <div class="confidence-container">
+
+            <div id="confidenceBar"></div>
+
+        </div>
+
+
+        <!-- GUIDANCE -->
+
+        <div class="guidance">
+
+            <strong id="guidanceTitle">
+                🌱 Guidance
+            </strong>
+
+            <p id="guidanceOutput">
+                --
+            </p>
+
+        </div>
+
+
+        <!-- NOTE -->
+
+        <div
+            class="note"
+            id="analysisNote"
+        >
+            This analysis checks visible leaf colour
+            and discoloration from the uploaded image.
+        </div>
+
+    </div>
+
+</div>
+
+
+<footer>
+    LeafTriage – Smart Agriculture & Rural Development
+</footer>
+
+
+<script>
+
+/* =====================================================
+   LANGUAGE
+===================================================== */
+
+const translations = {
+
+    en: {
+
+        subtitle:
+            "Automatic Leaf Image Analysis",
+
+        title:
+            "🌿 Leaf Image Analysis",
+
+        language:
+            "🌐 Select Language",
+
+        image:
+            "📷 Upload Leaf Image",
+
+        analyze:
+            "🔍 Analyze Leaf",
+
+        loading:
+            "🔄 Analyzing leaf image...",
+
+        result:
+            "🌿 Analysis Result",
+
+        resultImage:
+            "📷 Analyzed Leaf Image",
+
+        color:
+            "🎨 Leaf Color:",
+
+        symptom:
+            "🔍 Detected Symptom:",
+
+        damage:
+            "⚠️ Damage Level:",
+
+        disease:
+            "🦠 Predicted Disease:",
+
+        prediction:
+            "📊 Analysis Value:",
+
+        confidence:
+            "📈 Image Analysis Score:",
+
+        guidance:
+            "🌱 Guidance",
+
+        upload:
+            "Please upload a leaf image.",
+
+        notIdentified:
+            "Not Identified",
+
+        healthy:
+            "No major discoloration detected",
+
+        yellow:
+            "Yellow discoloration detected",
+
+        brown:
+            "Brown areas detected",
+
+        dark:
+            "Dark areas detected",
+
+        mixed:
+            "Mixed discoloration detected",
+
+        low:
+            "Low",
+
+        medium:
+            "Medium",
+
+        high:
+            "High",
+
+        healthyGuide:
+            "The leaf appears mostly green. Continue regular monitoring.",
+
+        mediumGuide:
+            "Some discoloration is visible. Monitor the leaf and check whether the affected area increases.",
+
+        highGuide:
+            "A larger discolored area is visible. Consider getting the plant checked by an agricultural expert.",
+
+        note:
+            "This analysis checks visible leaf colour and discoloration from the uploaded image."
+    },
+
+
+    ta: {
+
+        subtitle:
+            "தானியங்கி இலை படம் பகுப்பாய்வு",
+
+        title:
+            "🌿 இலை படம் பகுப்பாய்வு",
+
+        language:
+            "🌐 மொழியைத் தேர்ந்தெடுக்கவும்",
+
+        image:
+            "📷 இலை படத்தை பதிவேற்றவும்",
+
+        analyze:
+            "🔍 இலையை பகுப்பாய்வு செய்",
+
+        loading:
+            "🔄 இலை படம் பகுப்பாய்வு செய்யப்படுகிறது...",
+
+        result:
+            "🌿 பகுப்பாய்வு முடிவு",
+
+        resultImage:
+            "📷 பகுப்பாய்வு செய்யப்பட்ட இலை படம்",
+
+        color:
+            "🎨 இலையின் நிறம்:",
+
+        symptom:
+            "🔍 கண்டறியப்பட்ட அறிகுறி:",
+
+        damage:
+            "⚠️ பாதிப்பு அளவு:",
+
+        disease:
+            "🦠 கணிக்கப்பட்ட நோய்:",
+
+        prediction:
+            "📊 பகுப்பாய்வு மதிப்பு:",
+
+        confidence:
+            "📈 பட பகுப்பாய்வு மதிப்பெண்:",
+
+        guidance:
+            "🌱 வழிகாட்டுதல்",
+
+        upload:
+            "தயவுசெய்து இலை படத்தை பதிவேற்றவும்.",
+
+        notIdentified:
+            "கண்டறியப்படவில்லை",
+
+        healthy:
+            "பெரிய நிறமாற்றம் கண்டறியப்படவில்லை",
+
+        yellow:
+            "மஞ்சள் நிறமாற்றம் கண்டறியப்பட்டது",
+
+        brown:
+            "பழுப்பு நிற பகுதிகள் கண்டறியப்பட்டன",
+
+        dark:
+            "கருமையான பகுதிகள் கண்டறியப்பட்டன",
+
+        mixed:
+            "கலப்பு நிறமாற்றம் கண்டறியப்பட்டது",
+
+        low:
+            "குறைவு",
+
+        medium:
+            "நடுத்தரம்",
+
+        high:
+            "அதிகம்",
+
+        healthyGuide:
+            "இலை பெரும்பாலும் பச்சையாக உள்ளது. தொடர்ந்து கண்காணிக்கவும்.",
+
+        mediumGuide:
+            "சில நிறமாற்றங்கள் காணப்படுகின்றன. பாதிக்கப்பட்ட பகுதி அதிகரிக்கிறதா என்பதை கவனிக்கவும்.",
+
+        highGuide:
+            "அதிகமான நிறமாற்றம் காணப்படுகிறது. வேளாண்மை நிபுணரிடம் செடியை பரிசோதிக்கலாம்.",
+
+        note:
+            "பதிவேற்றப்பட்ட படத்தில் தெரியும் இலை நிறம் மற்றும் நிறமாற்றம் பகுப்பாய்வு செய்யப்படுகிறது."
+    },
+
+
+    te: {
+
+        subtitle:
+            "స్వయంచాలక ఆకు చిత్రం విశ్లేషణ",
+
+        title:
+            "🌿 ఆకు చిత్రం విశ్లేషణ",
+
+        language:
+            "🌐 భాషను ఎంచుకోండి",
+
+        image:
+            "📷 ఆకు చిత్రాన్ని అప్‌లోడ్ చేయండి",
+
+        analyze:
+            "🔍 ఆకును విశ్లేషించండి",
+
+        loading:
+            "🔄 ఆకు చిత్రాన్ని విశ్లేషిస్తోంది...",
+
+        result:
+            "🌿 విశ్లేషణ ఫలితం",
+
+        resultImage:
+            "📷 విశ్లేషించిన ఆకు చిత్రం",
+
+        color:
+            "🎨 ఆకు రంగు:",
+
+        symptom:
+            "🔍 గుర్తించిన లక్షణం:",
+
+        damage:
+            "⚠️ నష్టం స్థాయి:",
+
+        disease:
+            "🦠 అంచనా వ్యాధి:",
+
+        prediction:
+            "📊 విశ్లేషణ విలువ:",
+
+        confidence:
+            "📈 చిత్ర విశ్లేషణ స్కోర్:",
+
+        guidance:
+            "🌱 మార్గదర్శకం",
+
+        upload:
+            "దయచేసి ఆకు చిత్రాన్ని అప్‌లోడ్ చేయండి.",
+
+        notIdentified:
+            "గుర్తించబడలేదు",
+
+        healthy:
+            "పెద్ద రంగు మార్పు గుర్తించబడలేదు",
+
+        yellow:
+            "పసుపు రంగు మార్పు గుర్తించబడింది",
+
+        brown:
+            "గోధుమ రంగు ప్రాంతాలు గుర్తించబడ్డాయి",
+
+        dark:
+            "ముదురు ప్రాంతాలు గుర్తించబడ్డాయి",
+
+        mixed:
+            "మిశ్రమ రంగు మార్పు గుర్తించబడింది",
+
+        low:
+            "తక్కువ",
+
+        medium:
+            "మధ్యస్థం",
+
+        high:
+            "అధికం",
+
+        healthyGuide:
+            "ఆకు ఎక్కువగా ఆకుపచ్చగా కనిపిస్తోంది. క్రమం తప్పకుండా పరిశీలించండి.",
+
+        mediumGuide:
+            "కొంత రంగు మార్పు కనిపిస్తోంది. ప్రభావిత ప్రాంతం పెరుగుతుందో పరిశీలించండి.",
+
+        highGuide:
+            "ఎక్కువ రంగు మార్పు కనిపిస్తోంది. వ్యవసాయ నిపుణుడితో మొక్కను తనిఖీ చేయించండి.",
+
+        note:
+            "అప్‌లోడ్ చేసిన చిత్రంలో కనిపించే ఆకు రంగు మరియు రంగు మార్పును విశ్లేషిస్తుంది."
+    }
+};
+
+
+/* =====================================================
+   CHANGE LANGUAGE
+===================================================== */
+
+function changeLanguage() {
+
+    const lang =
+        document.getElementById("language").value;
+
+    const t =
+        translations[lang];
+
+
+    document.getElementById("subtitle").innerText =
+        t.subtitle;
+
+    document.getElementById("title").innerText =
+        t.title;
+
+    document.getElementById("languageLabel").innerText =
+        t.language;
+
+    document.getElementById("imageLabel").innerText =
+        t.image;
+
+    document.getElementById("analyzeButton").innerText =
+        t.analyze;
+
+    document.getElementById("loading").innerText =
+        t.loading;
+
+    document.getElementById("resultTitle").innerText =
+        t.result;
+
+    document.getElementById("resultImageLabel").innerText =
+        t.resultImage;
+
+    document.getElementById("colorLabel").innerText =
+        t.color;
+
+    document.getElementById("symptomLabel").innerText =
+        t.symptom;
+
+    document.getElementById("damageLabel").innerText =
+        t.damage;
+
+    document.getElementById("diseaseLabel").innerText =
+        t.disease;
+
+    document.getElementById("predictionLabel").innerText =
+        t.prediction;
+
+    document.getElementById("confidenceLabel").innerText =
+        t.confidence;
+
+    document.getElementById("guidanceTitle").innerText =
+        t.guidance;
+
+    document.getElementById("analysisNote").innerText =
+        t.note;
+}
+
+
+/* =====================================================
+   IMAGE PREVIEW
+===================================================== */
+
+function previewImage() {
+
+    const file =
+        document.getElementById("leafImage").files[0];
+
+    const preview =
+        document.getElementById("preview");
+
+
+    if (!file) {
+
+        preview.style.display =
+            "none";
+
+        document.getElementById("result").style.display =
+            "none";
+
+        return;
+    }
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload =
+        function(event) {
+
+            preview.src =
+                event.target.result;
+
+            preview.style.display =
+                "block";
+
+
+            document.getElementById(
+                "resultImage"
+            ).src =
+                event.target.result;
+
+
+            document.getElementById(
+                "result"
+            ).style.display =
+                "none";
+        };
+
+
+    reader.readAsDataURL(file);
+}
+
+
+/* =====================================================
+   IMAGE COLOR ANALYSIS
+===================================================== */
+
+function analyzeImageColors(image) {
+
+    const canvas =
+        document.getElementById("canvas");
+
+    const ctx =
+        canvas.getContext(
+            "2d",
+            {
+                willReadFrequently: true
+            }
+        );
+
+
+    canvas.width = 150;
+    canvas.height = 150;
+
+
+    ctx.clearRect(
+        0,
+        0,
+        150,
+        150
+    );
+
+
+    ctx.drawImage(
+        image,
+        0,
+        0,
+        150,
+        150
+    );
+
+
+    const imageData =
+        ctx.getImageData(
+            0,
+            0,
+            150,
+            150
+        );
+
+
+    const data =
+        imageData.data;
+
+
+    let red = 0;
+    let green = 0;
+    let blue = 0;
+
+    let greenPixels = 0;
+    let yellowPixels = 0;
+    let brownPixels = 0;
+    let darkPixels = 0;
+
+    let validPixels = 0;
+
+
+    for (
+        let i = 0;
+        i < data.length;
+        i += 4
+    ) {
+
+        const r =
+            data[i];
+
+        const g =
+            data[i + 1];
+
+        const b =
+            data[i + 2];
+
+        const a =
+            data[i + 3];
+
+
+        /*
+           Ignore transparent and
+           nearly-white background.
+        */
+
+        if (
+            a < 50 ||
+            (
+                r > 235 &&
+                g > 235 &&
+                b > 235
+            )
+        ) {
+
+            continue;
+        }
+
+
+        red += r;
+        green += g;
+        blue += b;
+
+        validPixels++;
+
+
+        /* GREEN */
+
+        if (
+            g > r * 1.05 &&
+            g > b * 1.10
+        ) {
+
+            greenPixels++;
+        }
+
+
+        /* YELLOW */
+
+        if (
+            r > 120 &&
+            g > 110 &&
+            b < 130 &&
+            Math.abs(r - g) < 85
+        ) {
+
+            yellowPixels++;
+        }
+
+
+        /* BROWN */
+
+        if (
+            r > 70 &&
+            r > g * 1.10 &&
+            g > b * 1.05 &&
+            b < 135
+        ) {
+
+            brownPixels++;
+        }
+
+
+        /* DARK */
+
+        if (
+            r < 80 &&
+            g < 80 &&
+            b < 80
+        ) {
+
+            darkPixels++;
+        }
+    }
+
+
+    if (
+        validPixels === 0
+    ) {
+
+        return {
+
+            color:
+                "Unknown",
+
+            damageRatio:
+                0,
+
+            greenRatio:
+                0,
+
+            yellowRatio:
+                0,
+
+            brownRatio:
+                0,
+
+            darkRatio:
+                0
+        };
+    }
+
+
+    const avgR =
+        red / validPixels;
+
+    const avgG =
+        green / validPixels;
+
+    const avgB =
+        blue / validPixels;
+
+
+    const greenRatio =
+        greenPixels / validPixels;
+
+    const yellowRatio =
+        yellowPixels / validPixels;
+
+    const brownRatio =
+        brownPixels / validPixels;
+
+    const darkRatio =
+        darkPixels / validPixels;
+
+
+    /*
+       DETECT LEAF COLOR
+    */
+
+    let detectedColor =
+        "Mixed";
+
+
+    if (
+        greenRatio > 0.45
+    ) {
+
+        detectedColor =
+            "Green";
+    }
+
+    else if (
+        yellowRatio > 0.25
+    ) {
+
+        detectedColor =
+            "Yellow";
+    }
+
+    else if (
+        brownRatio > 0.20
+    ) {
+
+        detectedColor =
+            "Brown";
+    }
+
+    else if (
+        darkRatio > 0.20
+    ) {
+
+        detectedColor =
+            "Dark / Black";
+    }
+
+    else if (
+        avgG > avgR &&
+        avgG > avgB
+    ) {
+
+        detectedColor =
+            "Green / Mixed";
+    }
+
+
+    /*
+       VISIBLE DISCOLORATION RATIO
+    */
+
+    const damageRatio =
+        Math.min(
+            1,
+            yellowRatio +
+            brownRatio +
+            darkRatio
+        );
+
+
+    return {
+
+        color:
+            detectedColor,
+
+        damageRatio:
+            damageRatio,
+
+        greenRatio:
+            greenRatio,
+
+        yellowRatio:
+            yellowRatio,
+
+        brownRatio:
+            brownRatio,
+
+        darkRatio:
+            darkRatio
+    };
+}
+
+
+/* =====================================================
+   DETECT SYMPTOM
+===================================================== */
+
+function detectSymptom(
+    analysis,
+    t
+) {
+
+    if (
+        analysis.damageRatio < 0.15
+    ) {
+
+        return t.healthy;
+    }
+
+
+    if (
+        analysis.brownRatio >
+        analysis.yellowRatio &&
+        analysis.brownRatio >
+        analysis.darkRatio
+    ) {
+
+        return t.brown;
+    }
+
+
+    if (
+        analysis.yellowRatio >
+        analysis.brownRatio &&
+        analysis.yellowRatio >
+        analysis.darkRatio
+    ) {
+
+        return t.yellow;
+    }
+
+
+    if (
+        analysis.darkRatio >
+        analysis.brownRatio &&
+        analysis.darkRatio >
+        analysis.yellowRatio
+    ) {
+
+        return t.dark;
+    }
+
+
+    return t.mixed;
+}
+
+
+/* =====================================================
+   ANALYZE LEAF
+===================================================== */
+
+function analyzeLeaf() {
+
+    const file =
+        document.getElementById(
+            "leafImage"
+        ).files[0];
+
+
+    const lang =
+        document.getElementById(
+            "language"
+        ).value;
+
+
+    const t =
+        translations[lang];
+
+
+    if (!file) {
+
+        alert(
+            t.upload
+        );
+
+        return;
+    }
+
+
+    document.getElementById(
+        "loading"
+    ).style.display =
+        "block";
+
+
+    document.getElementById(
+        "result"
+    ).style.display =
+        "none";
+
+
+    const image =
+        document.getElementById(
+            "preview"
+        );
+
+
+    const processImage =
+        function() {
+
+
+            /* =========================
+               IMAGE ANALYSIS
+            ========================= */
+
+            const analysis =
+                analyzeImageColors(
+                    image
+                );
+
+
+            /* =========================
+               DAMAGE LEVEL
+            ========================= */
+
+            let damageLevel;
+
+
+            if (
+                analysis.damageRatio < 0.15
+            ) {
+
+                damageLevel =
+                    t.low;
+            }
+
+
+            else if (
+                analysis.damageRatio < 0.35
+            ) {
+
+                damageLevel =
+                    t.medium;
+            }
+
+
+            else {
+
+                damageLevel =
+                    t.high;
+            }
+
+
+            /* =========================
+               SYMPTOM
+            ========================= */
+
+            const symptom =
+                detectSymptom(
+                    analysis,
+                    t
+                );
+
+
+            /* =========================
+               DISEASE
+            ========================= */
+
+            const disease =
+                t.notIdentified;
+
+
+            /* =========================
+               IMAGE ANALYSIS SCORE
+            ========================= */
+
+            const analysisScore =
+                Math.min(
+                    0.95,
+                    0.55 +
+                    Math.abs(
+                        analysis.greenRatio -
+                        analysis.damageRatio
+                    ) * 0.30
+                );
+
+
+            const score =
+                analysisScore * 100;
+
+
+            /* =========================
+               GUIDANCE
+            ========================= */
+
+            let guidance;
+
+
+            if (
+                analysis.damageRatio < 0.15
+            ) {
+
+                guidance =
+                    t.healthyGuide;
+            }
+
+
+            else if (
+                analysis.damageRatio < 0.35
+            ) {
+
+                guidance =
+                    t.mediumGuide;
+            }
+
+
+            else {
+
+                guidance =
+                    t.highGuide;
+            }
+
+
+            /* =========================
+               RESULT IMAGE
+            ========================= */
+
+            document.getElementById(
+                "resultImage"
+            ).src =
+                image.src;
+
+
+            /* =========================
+               LEAF COLOR
+            ========================= */
+
+            document.getElementById(
+                "colorOutput"
+            ).innerText =
+                analysis.color;
+
+
+            /* =========================
+               SYMPTOM
+            ========================= */
+
+            document.getElementById(
+                "symptomOutput"
+            ).innerText =
+                symptom;
+
+
+            /* =========================
+               DAMAGE LEVEL
+            ========================= */
+
+            document.getElementById(
+                "damageOutput"
+            ).innerText =
+                damageLevel;
+
+
+            /* =========================
+               DISEASE
+            ========================= */
+
+            document.getElementById(
+                "diseaseOutput"
+            ).innerText =
+                disease;
+
+
+            /* =========================
+               ANALYSIS VALUE
+            ========================= */
+
+            document.getElementById(
+                "predictionOutput"
+            ).innerText =
+                analysisScore.toFixed(2);
+
+
+            /* =========================
+               SCORE
+            ========================= */
+
+            document.getElementById(
+                "confidenceOutput"
+            ).innerText =
+                score.toFixed(2)
+                + "%";
+
+
+            document.getElementById(
+                "confidenceBar"
+            ).style.width =
+                score + "%";
+
+
+            /* =========================
+               GUIDANCE
+            ========================= */
+
+            document.getElementById(
+                "guidanceOutput"
+            ).innerText =
+                guidance;
+
+
+            /* =========================
+               FINISH
+            ========================= */
+
+            document.getElementById(
+                "loading"
+            ).style.display =
+                "none";
+
+
+            document.getElementById(
+                "result"
+            ).style.display =
+                "block";
+
+
+            document.getElementById(
+                "result"
+            ).scrollIntoView({
+
+                behavior:
+                    "smooth"
+            });
+        };
+
+
+    /*
+       Wait until image is loaded
+    */
+
+    if (
+        image.complete &&
+        image.naturalWidth > 0
+    ) {
+
+        processImage();
+    }
+
+    else {
+
+        image.onload =
+            processImage;
+    }
+}
+
+</script>
+
+</body>
+</html>

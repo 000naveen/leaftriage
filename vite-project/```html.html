@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>LeafTriage - Disease Prediction</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    min-height: 100vh;
+}
+
+header {
+    background: #1b5e20;
+    color: white;
+    text-align: center;
+    padding: 25px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 38px;
+}
+
+header p {
+    margin: 8px 0 0;
+}
+
+.container {
+    width: 650px;
+    max-width: 94%;
+    margin: 30px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.18);
+}
+
+h2 {
+    text-align: center;
+    color: #1b5e20;
+}
+
+label {
+    display: block;
+    margin-top: 18px;
+    margin-bottom: 7px;
+    font-weight: bold;
+}
+
+select,
+input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    background: white;
+}
+
+#preview {
+    display: none;
+    width: 250px;
+    height: 250px;
+    object-fit: contain;
+    margin: 20px auto;
+    border: 2px solid #4caf50;
+    border-radius: 12px;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 25px;
+    background: #2e7d32;
+    color: white;
+    border: none;
+    border-radius: 9px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1b5e20;
+}
+
+#result {
+    display: none;
+    margin-top: 30px;
+    padding: 22px;
+    background: #f1f8e9;
+    border-left: 6px solid #2e7d32;
+    border-radius: 10px;
+}
+
+.result-row {
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.disease-name {
+    color: #c62828;
+    font-weight: bold;
+}
+
+.prediction-value {
+    color: #1565c0;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.confidence {
+    color: #2e7d32;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.confidence-container {
+    width: 100%;
+    height: 24px;
+    margin-top: 12px;
+    background: #ddd;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+#confidenceBar {
+    width: 0%;
+    height: 100%;
+    background: #4caf50;
+    transition: width 0.8s;
+}
+
+#statusOutput {
+    font-weight: bold;
+    font-size: 17px;
+    margin-top: 15px;
+}
+
+.guidance {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.score-box {
+    margin-top: 15px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #555;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🍃 LeafTriage</h1>
+    <p id="subtitle">Crop Disease Prediction System</p>
+</header>
+
+<div class="container">
+
+<h2 id="formTitle">🌱 Enter Leaf Details</h2>
+
+<!-- LANGUAGE -->
+
+<label id="languageLabel">🌐 Select Language</label>
+
+<select id="language" onchange="changeLanguage()">
+    <option value="en">English</option>
+    <option value="ta">தமிழ்</option>
+    <option value="te">తెలుగు</option>
+</select>
+
+<!-- IMAGE -->
+
+<label id="imageLabel">📷 Upload Leaf Image</label>
+
+<input type="file"
+       id="leafImage"
+       accept="image/*"
+       onchange="previewImage()">
+
+<img id="preview" alt="Leaf Preview">
+
+<!-- CROP -->
+
+<label id="cropLabel">🌾 Select Crop</label>
+
+<select id="crop">
+    <option value="">-- Select Crop --</option>
+    <option value="corn">Corn / Maize</option>
+    <option value="rice">Rice</option>
+    <option value="wheat">Wheat</option>
+    <option value="tomato">Tomato</option>
+    <option value="potato">Potato</option>
+    <option value="banana">Banana</option>
+    <option value="mango">Mango</option>
+    <option value="grape">Grape</option>
+    <option value="apple">Apple</option>
+    <option value="chilli">Chilli</option>
+    <option value="brinjal">Brinjal</option>
+    <option value="cucumber">Cucumber</option>
+    <option value="cotton">Cotton</option>
+    <option value="sugarcane">Sugarcane</option>
+    <option value="groundnut">Groundnut</option>
+    <option value="soybean">Soybean</option>
+</select>
+
+<!-- LEAF COLOR -->
+
+<label id="colorLabel">🎨 Leaf Color</label>
+
+<select id="color">
+    <option value="">-- Select Leaf Color --</option>
+    <option value="green">Normal Green</option>
+    <option value="lightgreen">Light Green</option>
+    <option value="darkgreen">Dark Green</option>
+    <option value="yellow">Yellow</option>
+    <option value="paleyellow">Pale Yellow</option>
+    <option value="yellowgreen">Yellow-Green</option>
+    <option value="brown">Brown</option>
+    <option value="lightbrown">Light Brown</option>
+    <option value="darkbrown">Dark Brown</option>
+    <option value="black">Black / Dark</option>
+    <option value="gray">Gray</option>
+    <option value="white">White / Pale</option>
+    <option value="redbrown">Red-Brown</option>
+    <option value="orange">Orange</option>
+    <option value="purple">Purple</option>
+    <option value="mixed">Mixed Colors</option>
+</select>
+
+<!-- SYMPTOM -->
+
+<label id="symptomLabel">🔍 Spot / Symptom Type</label>
+
+<select id="symptom">
+    <option value="">-- Select Symptom --</option>
+    <option value="none">No Visible Spots</option>
+    <option value="rust">Rust / Orange-Brown Spots</option>
+    <option value="brownspots">Brown Spots</option>
+    <option value="blackspots">Black Spots</option>
+    <option value="whitespots">White Spots</option>
+    <option value="yellowspots">Yellow Spots</option>
+    <option value="grayspots">Gray Spots</option>
+    <option value="circular">Circular Spots</option>
+    <option value="smallspots">Small Scattered Spots</option>
+    <option value="largespots">Large Irregular Spots</option>
+    <option value="longlesions">Long Brown Lesions</option>
+    <option value="rectangular">Rectangular Lesions</option>
+    <option value="watersoaked">Water-Soaked Spots</option>
+    <option value="yellowhalo">Spots With Yellow Halo</option>
+    <option value="powder">White Powdery Layer</option>
+    <option value="mildew">Mildew / Fungal Growth</option>
+    <option value="mosaic">Mosaic / Patchy Pattern</option>
+    <option value="yellowing">General Leaf Yellowing</option>
+    <option value="wilting">Wilting / Drooping</option>
+    <option value="curling">Leaf Curling</option>
+    <option value="dryedges">Dry / Brown Leaf Edges</option>
+    <option value="holes">Holes / Damaged Areas</option>
+    <option value="blight">Blighted / Dead Areas</option>
+    <option value="streaks">Streaks / Stripes</option>
+    <option value="vein">Vein Discoloration</option>
+    <option value="tipburn">Leaf Tip Burn</option>
+    <option value="necrosis">Dead / Necrotic Tissue</option>
+</select>
+
+<!-- DAMAGE -->
+
+<label id="damageLabel">⚠️ Disease / Damage Level</label>
+
+<select id="damage">
+    <option value="">-- Select Damage Level --</option>
+    <option value="verylow">Very Low</option>
+    <option value="low">Low</option>
+    <option value="medium">Medium</option>
+    <option value="high">High</option>
+    <option value="severe">Severe</option>
+</select>
+
+<button id="predictButton" onclick="predictDisease()">
+    🔍 Predict Disease
+</button>
+
+<!-- RESULT -->
+
+<div id="result">
+
+    <h2 id="resultTitle">🌿 Prediction Result</h2>
+
+    <div class="result-row">
+        <strong id="cropResultLabel">Crop:</strong>
+        <span id="cropOutput"></span>
+    </div>
+
+    <div class="result-row">
+        <strong id="diseaseResultLabel">Predicted Disease:</strong>
+        <span id="diseaseOutput" class="disease-name"></span>
+    </div>
+
+    <div class="result-row">
+        <strong id="valueResultLabel">Prediction Value:</strong>
+        <span id="valueOutput" class="prediction-value"></span>
+    </div>
+
+    <div class="result-row">
+        <strong id="confidenceResultLabel">Confidence:</strong>
+        <span id="confidenceOutput" class="confidence"></span>
+    </div>
+
+    <div class="confidence-container">
+        <div id="confidenceBar"></div>
+    </div>
+
+    <p id="statusOutput"></p>
+
+    <div class="score-box">
+        <strong id="scoreTitle">📊 Prediction Calculation</strong>
+        <p id="scoreOutput"></p>
+    </div>
+
+    <h3 id="guidanceTitle">🌱 Guidance</h3>
+
+    <div class="guidance">
+        <p id="guidanceOutput"></p>
+    </div>
+
+</div>
+
+</div>
+
+<footer>
+    LeafTriage – Smart Agriculture & Rural Development
+</footer>
+
+
+<script>
+
+/* =========================================
+   LANGUAGE
+========================================= */
+
+const text = {
+
+    en: {
+        subtitle: "Crop Disease Prediction System",
+        title: "🌱 Enter Leaf Details",
+        language: "🌐 Select Language",
+        image: "📷 Upload Leaf Image",
+        crop: "🌾 Select Crop",
+        color: "🎨 Leaf Color",
+        symptom: "🔍 Spot / Symptom Type",
+        damage: "⚠️ Disease / Damage Level",
+        button: "🔍 Predict Disease",
+        result: "🌿 Prediction Result",
+        cropResult: "Crop:",
+        diseaseResult: "Predicted Disease:",
+        valueResult: "Prediction Value:",
+        confidenceResult: "Confidence:",
+        score: "📊 Prediction Calculation",
+        guidance: "🌱 Guidance",
+        high: "✅ High Confidence Prediction",
+        medium: "⚠️ Medium Confidence Prediction",
+        low: "⚠️ Low Confidence - Expert Review Recommended",
+        fill: "Please select all leaf details."
+    },
+
+    ta: {
+        subtitle: "பயிர் நோய் கணிப்பு அமைப்பு",
+        title: "🌱 இலை விவரங்களை உள்ளிடவும்",
+        language: "🌐 மொழியைத் தேர்ந்தெடுக்கவும்",
+        image: "📷 இலை படத்தை பதிவேற்றவும்",
+        crop: "🌾 பயிரைத் தேர்ந்தெடுக்கவும்",
+        color: "🎨 இலையின் நிறம்",
+        symptom: "🔍 அறிகுறி வகை",
+        damage: "⚠️ பாதிப்பு அளவு",
+        button: "🔍 நோயை கணிக்கவும்",
+        result: "🌿 கணிப்பு முடிவு",
+        cropResult: "பயிர்:",
+        diseaseResult: "கணிக்கப்பட்ட நோய்:",
+        valueResult: "கணிப்பு மதிப்பு:",
+        confidenceResult: "நம்பகத்தன்மை:",
+        score: "📊 கணிப்பு கணக்கீடு",
+        guidance: "🌱 வழிகாட்டுதல்",
+        high: "✅ அதிக நம்பகத்தன்மை கொண்ட கணிப்பு",
+        medium: "⚠️ நடுத்தர நம்பகத்தன்மை கொண்ட கணிப்பு",
+        low: "⚠️ குறைந்த நம்பகத்தன்மை - நிபுணர் ஆய்வு பரிந்துரைக்கப்படுகிறது",
+        fill: "அனைத்து விவரங்களையும் தேர்ந்தெடுக்கவும்."
+    },
+
+    te: {
+        subtitle: "పంట వ్యాధి అంచనా వ్యవస్థ",
+        title: "🌱 ఆకు వివరాలను నమోదు చేయండి",
+        language: "🌐 భాషను ఎంచుకోండి",
+        image: "📷 ఆకు చిత్రాన్ని అప్‌లోడ్ చేయండి",
+        crop: "🌾 పంటను ఎంచుకోండి",
+        color: "🎨 ఆకు రంగు",
+        symptom: "🔍 లక్షణం రకం",
+        damage: "⚠️ నష్టం స్థాయి",
+        button: "🔍 వ్యాధిని అంచనా వేయండి",
+        result: "🌿 అంచనా ఫలితం",
+        cropResult: "పంట:",
+        diseaseResult: "అంచనా వ్యాధి:",
+        valueResult: "అంచనా విలువ:",
+        confidenceResult: "నమ్మక స్థాయి:",
+        score: "📊 అంచనా గణన",
+        guidance: "🌱 మార్గదర్శకం",
+        high: "✅ అధిక నమ్మకంతో అంచనా",
+        medium: "⚠️ మధ్యస్థ నమ్మకంతో అంచనా",
+        low: "⚠️ తక్కువ నమ్మకం - నిపుణుల సమీక్ష సిఫార్సు",
+        fill: "అన్ని వివరాలను ఎంచుకోండి."
+    }
+};
+
+
+/* =========================================
+   DISEASE NAMES
+========================================= */
+
+const diseases = {
+
+    healthy: {
+        en: "Healthy Leaf",
+        ta: "ஆரோக்கியமான இலை",
+        te: "ఆరోగ్యకరమైన ఆకు"
+    },
+
+    cornRust: {
+        en: "Corn Common Rust",
+        ta: "மக்காச்சோள துரு நோய்",
+        te: "మొక్కజొన్న రస్ట్ వ్యాధి"
+    },
+
+    cornBlight: {
+        en: "Corn Leaf Blight",
+        ta: "மக்காச்சோள இலை கருகல்",
+        te: "మొక్కజొన్న లీఫ్ బ్లైట్"
+    },
+
+    cornGray: {
+        en: "Corn Gray Leaf Spot",
+        ta: "மக்காச்சோள சாம்பல் இலைப்புள்ளி",
+        te: "మొక్కజొన్న గ్రే లీఫ్ స్పాట్"
+    },
+
+    riceBrown: {
+        en: "Rice Brown Spot",
+        ta: "நெல் பழுப்பு இலைப்புள்ளி",
+        te: "వరి బ్రౌన్ స్పాట్"
+    },
+
+    riceBlight: {
+        en: "Rice Leaf Blight",
+        ta: "நெல் இலை கருகல்",
+        te: "వరి లీఫ్ బ్లైట్"
+    },
+
+    wheatRust: {
+        en: "Wheat Rust",
+        ta: "கோதுமை துரு நோய்",
+        te: "గోధుమ రస్ట్"
+    },
+
+    wheatMildew: {
+        en: "Wheat Powdery Mildew",
+        ta: "கோதுமை பவுடரி மில்டியூ",
+        te: "గోధుమ పౌడరీ మిల్డ్యూ"
+    },
+
+    tomatoEarly: {
+        en: "Tomato Early Blight",
+        ta: "தக்காளி ஆரம்ப இலை கருகல்",
+        te: "టమాటా ఎర్లీ బ్లైట్"
+    },
+
+    tomatoLate: {
+        en: "Tomato Late Blight",
+        ta: "தக்காளி லேட் பிளைட்",
+        te: "టమాటా లేట్ బ్లైట్"
+    },
+
+    tomatoMosaic: {
+        en: "Tomato Mosaic Disease",
+        ta: "தக்காளி மொசைக் நோய்",
+        te: "టమాటా మొజాయిక్ వ్యాధి"
+    },
+
+    tomatoCurl: {
+        en: "Tomato Leaf Curl",
+        ta: "தக்காளி இலை சுருட்டு நோய்",
+        te: "టమాటా లీఫ్ కర్ల్"
+    },
+
+    potatoEarly: {
+        en: "Potato Early Blight",
+        ta: "உருளைக்கிழங்கு ஆரம்ப இலை கருகல்",
+        te: "బంగాళాదుంప ఎర్లీ బ్లైట్"
+    },
+
+    potatoLate: {
+        en: "Potato Late Blight",
+        ta: "உருளைக்கிழங்கு லேட் பிளைட்",
+        te: "బంగాళాదుంప లేట్ బ్లైట్"
+    },
+
+    bananaSpot: {
+        en: "Banana Sigatoka Leaf Spot",
+        ta: "வாழை சிகடோகா இலைப்புள்ளி",
+        te: "అరటి సిగటోకా లీఫ్ స్పాట్"
+    },
+
+    mangoAnthracnose: {
+        en: "Mango Anthracnose",
+        ta: "மாம்பழ ஆந்த்ராக்னோஸ்",
+        te: "మామిడి ఆంత్రాక్నోస్"
+    },
+
+    mangoMildew: {
+        en: "Mango Powdery Mildew",
+        ta: "மாம்பழ பவுடரி மில்டியூ",
+        te: "మామిడి పౌడరీ మిల్డ్యూ"
+    },
+
+    grapeMildew: {
+        en: "Grape Powdery Mildew",
+        ta: "திராட்சை பவுடரி மில்டியூ",
+        te: "ద్రాక్ష పౌడరీ మిల్డ్యూ"
+    },
+
+    appleScab: {
+        en: "Apple Scab",
+        ta: "ஆப்பிள் ஸ்கேப்",
+        te: "ఆపిల్ స్కాబ్"
+    },
+
+    chilliCurl: {
+        en: "Chilli Leaf Curl",
+        ta: "மிளகாய் இலை சுருட்டு நோய்",
+        te: "మిరప లీఫ్ కర్ల్"
+    },
+
+    chilliMosaic: {
+        en: "Chilli Mosaic Disease",
+        ta: "மிளகாய் மொசைக் நோய்",
+        te: "మిరప మొజాయిక్ వ్యాధి"
+    },
+
+    cucumberMildew: {
+        en: "Cucumber Powdery Mildew",
+        ta: "வெள்ளரி பவுடரி மில்டியூ",
+        te: "దోసకాయ పౌడరీ మిల్డ్యూ"
+    },
+
+    genericSpot: {
+        en: "Possible Leaf Spot Disease",
+        ta: "சாத்தியமான இலைப்புள்ளி நோய்",
+        te: "సంభావ్య లీఫ్ స్పాట్ వ్యాధి"
+    },
+
+    genericMildew: {
+        en: "Possible Fungal / Mildew Disease",
+        ta: "சாத்தியமான பூஞ்சை நோய்",
+        te: "సంభావ్య ఫంగల్ వ్యాధి"
+    },
+
+    uncertain: {
+        en: "Uncertain Disease",
+        ta: "உறுதிப்படுத்த முடியாத நோய்",
+        te: "నిర్ధారించలేని వ్యాధి"
+    }
+};
+
+
+/* =========================================
+   GUIDANCE
+========================================= */
+
+const guidance = {
+
+    healthy: {
+        en: "Leaf appears healthy. Continue regular crop monitoring.",
+        ta: "இலை ஆரோக்கியமாக உள்ளது. பயிரை தொடர்ந்து கண்காணிக்கவும்.",
+        te: "ఆకు ఆరోగ్యంగా కనిపిస్తోంది. పంటను క్రమం తప్పకుండా పరిశీలించండి."
+    },
+
+    disease: {
+        en: "Disease symptoms may be present. Monitor affected plants and follow verified agricultural guidance.",
+        ta: "நோய் அறிகுறிகள் இருக்கலாம். பாதிக்கப்பட்ட பயிர்களை கண்காணித்து சரிபார்க்கப்பட்ட வேளாண் வழிகாட்டுதலைப் பின்பற்றவும்.",
+        te: "వ్యాధి లక్షణాలు ఉండవచ్చు. ప్రభావిత మొక్కలను పరిశీలించి ధృవీకరించిన వ్యవసాయ మార్గదర్శకాలను అనుసరించండి."
+    },
+
+    uncertain: {
+        en: "The selected symptoms do not provide a confident result. Expert review is recommended.",
+        ta: "தேர்ந்தெடுக்கப்பட்ட அறிகுறிகள் உறுதியான முடிவை வழங்கவில்லை. நிபுணர் ஆய்வு பரிந்துரைக்கப்படுகிறது.",
+        te: "ఎంచుకున్న లక్షణాలు నమ్మదగిన ఫలితాన్ని ఇవ్వలేదు. నిపుణుల సమీక్ష సిఫార్సు చేయబడింది."
+    }
+};
+
+
+/* =========================================
+   CHANGE LANGUAGE
+========================================= */
+
+function changeLanguage() {
+
+    const lang = document.getElementById("language").value;
+    const t = text[lang];
+
+    document.getElementById("subtitle").innerText = t.subtitle;
+    document.getElementById("formTitle").innerText = t.title;
+    document.getElementById("languageLabel").innerText = t.language;
+    document.getElementById("imageLabel").innerText = t.image;
+    document.getElementById("cropLabel").innerText = t.crop;
+    document.getElementById("colorLabel").innerText = t.color;
+    document.getElementById("symptomLabel").innerText = t.symptom;
+    document.getElementById("damageLabel").innerText = t.damage;
+    document.getElementById("predictButton").innerText = t.button;
+
+    document.getElementById("resultTitle").innerText = t.result;
+    document.getElementById("cropResultLabel").innerText = t.cropResult;
+    document.getElementById("diseaseResultLabel").innerText = t.diseaseResult;
+    document.getElementById("valueResultLabel").innerText = t.valueResult;
+    document.getElementById("confidenceResultLabel").innerText = t.confidenceResult;
+    document.getElementById("scoreTitle").innerText = t.score;
+    document.getElementById("guidanceTitle").innerText = t.guidance;
+
+    if (document.getElementById("result").style.display === "block") {
+        predictDisease();
+    }
+}
+
+
+/* =========================================
+   IMAGE PREVIEW
+========================================= */
+
+function previewImage() {
+
+    const file = document.getElementById("leafImage").files[0];
+    const preview = document.getElementById("preview");
+
+    if (file) {
+
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+            preview.src = event.target.result;
+            preview.style.display = "block";
+        };
+
+        reader.readAsDataURL(file);
+    }
+}
+
+
+/* =========================================
+   PREDICTION FUNCTION
+========================================= */
+
+function predictDisease() {
+
+    const lang = document.getElementById("language").value;
+    const crop = document.getElementById("crop").value;
+    const color = document.getElementById("color").value;
+    const symptom = document.getElementById("symptom").value;
+    const damage = document.getElementById("damage").value;
+
+
+    /* VALIDATION */
+
+    if (!crop || !color || !symptom || !damage) {
+        alert(text[lang].fill);
+        return;
+    }
+
+
+    /* -----------------------------------------
+       DEFAULT VALUES
+    ----------------------------------------- */
+
+    let diseaseKey = "uncertain";
+
+    let cropScore = 0.40;
+    let colorScore = 0;
+    let symptomScore = 0;
+    let damageScore = 0;
+
+
+    /* =========================================
+       1. IDENTIFY DISEASE FROM USER INPUT
+    ========================================= */
+
+
+    /* HEALTHY */
+
+    if (
+        symptom === "none" &&
+        (
+            color === "green" ||
+            color === "lightgreen" ||
+            color === "darkgreen"
+        )
+    ) {
+        diseaseKey = "healthy";
+
+        cropScore = 0.88;
+        colorScore = 0.05;
+        symptomScore = 0.04;
+    }
+
+
+    /* CORN */
+
+    else if (crop === "corn") {
+
+        if (symptom === "rust") {
+
+            diseaseKey = "cornRust";
+            cropScore = 0.66;
+            symptomScore = 0.17;
+
+            if (
+                color === "orange" ||
+                color === "redbrown" ||
+                color === "brown"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+
+        else if (
+            symptom === "longlesions" ||
+            symptom === "blight"
+        ) {
+
+            diseaseKey = "cornBlight";
+            cropScore = 0.65;
+            symptomScore = 0.16;
+
+            if (
+                color === "brown" ||
+                color === "darkbrown" ||
+                color === "yellow"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+
+        else if (
+            symptom === "grayspots" ||
+            symptom === "rectangular"
+        ) {
+
+            diseaseKey = "cornGray";
+            cropScore = 0.65;
+            symptomScore = 0.16;
+
+            if (
+                color === "gray" ||
+                color === "brown"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+    }
+
+
+    /* RICE */
+
+    else if (crop === "rice") {
+
+        if (
+            symptom === "brownspots" ||
+            symptom === "circular"
+        ) {
+
+            diseaseKey = "riceBrown";
+            cropScore = 0.64;
+            symptomScore = 0.17;
+
+            if (
+                color === "brown" ||
+                color === "yellow" ||
+                color === "darkbrown"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+
+        else if (
+            symptom === "blight" ||
+            symptom === "dryedges" ||
+            symptom === "streaks"
+        ) {
+
+            diseaseKey = "riceBlight";
+            cropScore = 0.64;
+            symptomScore = 0.16;
+
+            if (
+                color === "yellow" ||
+                color === "brown"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+    }
+
+
+    /* WHEAT */
+
+    else if (crop === "wheat") {
+
+        if (
+            symptom === "rust" ||
+            symptom === "streaks"
+        ) {
+
+            diseaseKey = "wheatRust";
+            cropScore = 0.67;
+            symptomScore = 0.16;
+
+            if (
+                color === "orange" ||
+                color === "redbrown" ||
+                color === "brown"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+
+        else if (
+            symptom === "powder" ||
+            symptom === "mildew" ||
+            symptom === "whitespots"
+        ) {
+
+            diseaseKey = "wheatMildew";
+            cropScore = 0.65;
+            symptomScore = 0.17;
+
+            if (
+                color === "white" ||
+                color === "paleyellow"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+    }
+
+
+    /* TOMATO */
+
+    else if (crop === "tomato") {
+
+        if (
+            symptom === "brownspots" ||
+            symptom === "circular" ||
+            symptom === "yellowhalo"
+        ) {
+
+            diseaseKey = "tomatoEarly";
+            cropScore = 0.66;
+            symptomScore = 0.17;
+
+            if (
+                color === "brown" ||
+                color === "yellow" ||
+                color === "darkbrown"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+
+        else if (
+            symptom === "blight" ||
+            symptom === "largespots" ||
+            symptom === "watersoaked" ||
+            symptom === "necrosis"
+        ) {
+
+            diseaseKey = "tomatoLate";
+            cropScore = 0.68;
+            symptomScore = 0.16;
+
+            if (
+                color === "brown" ||
+                color === "black" ||
+                color === "darkbrown"
+            ) {
+                colorScore = 0.09;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+
+        else if (symptom === "mosaic") {
+
+            diseaseKey = "tomatoMosaic";
+            cropScore = 0.65;
+            symptomScore = 0.17;
+
+            if (
+                color === "mixed" ||
+                color === "yellowgreen"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+
+        else if (symptom === "curling") {
+
+            diseaseKey = "tomatoCurl";
+            cropScore = 0.64;
+            symptomScore = 0.17;
+
+            if (
+                color === "yellow" ||
+                color === "yellowgreen" ||
+                color === "lightgreen"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+    }
+
+
+    /* POTATO */
+
+    else if (crop === "potato") {
+
+        if (
+            symptom === "brownspots" ||
+            symptom === "circular"
+        ) {
+
+            diseaseKey = "potatoEarly";
+            cropScore = 0.65;
+            symptomScore = 0.17;
+
+            if (
+                color === "brown" ||
+                color === "yellow"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+
+        else if (
+            symptom === "blight" ||
+            symptom === "watersoaked" ||
+            symptom === "necrosis"
+        ) {
+
+            diseaseKey = "potatoLate";
+            cropScore = 0.68;
+            symptomScore = 0.16;
+
+            if (
+                color === "brown" ||
+                color === "black" ||
+                color === "darkbrown"
+            ) {
+                colorScore = 0.09;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+    }
+
+
+    /* BANANA */
+
+    else if (crop === "banana") {
+
+        if (
+            symptom === "blackspots" ||
+            symptom === "streaks" ||
+            symptom === "brownspots"
+        ) {
+
+            diseaseKey = "bananaSpot";
+            cropScore = 0.65;
+            symptomScore = 0.16;
+
+            if (
+                color === "black" ||
+                color === "brown" ||
+                color === "yellow"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+    }
+
+
+    /* MANGO */
+
+    else if (crop === "mango") {
+
+        if (
+            symptom === "blackspots" ||
+            symptom === "brownspots" ||
+            symptom === "necrosis"
+        ) {
+
+            diseaseKey = "mangoAnthracnose";
+            cropScore = 0.64;
+            symptomScore = 0.17;
+
+            if (
+                color === "black" ||
+                color === "brown" ||
+                color === "darkbrown"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+
+        else if (
+            symptom === "powder" ||
+            symptom === "mildew" ||
+            symptom === "whitespots"
+        ) {
+
+            diseaseKey = "mangoMildew";
+            cropScore = 0.65;
+            symptomScore = 0.16;
+
+            if (color === "white") {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+    }
+
+
+    /* GRAPE */
+
+    else if (crop === "grape") {
+
+        if (
+            symptom === "powder" ||
+            symptom === "mildew" ||
+            symptom === "whitespots"
+        ) {
+
+            diseaseKey = "grapeMildew";
+            cropScore = 0.67;
+            symptomScore = 0.16;
+
+            if (
+                color === "white" ||
+                color === "yellowgreen"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+    }
+
+
+    /* APPLE */
+
+    else if (crop === "apple") {
+
+        if (
+            symptom === "blackspots" ||
+            symptom === "brownspots" ||
+            symptom === "circular"
+        ) {
+
+            diseaseKey = "appleScab";
+            cropScore = 0.66;
+            symptomScore = 0.16;
+
+            if (
+                color === "black" ||
+                color === "brown"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+    }
+
+
+    /* CHILLI */
+
+    else if (crop === "chilli") {
+
+        if (symptom === "curling") {
+
+            diseaseKey = "chilliCurl";
+            cropScore = 0.65;
+            symptomScore = 0.17;
+
+            if (
+                color === "yellow" ||
+                color === "yellowgreen"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+
+        else if (symptom === "mosaic") {
+
+            diseaseKey = "chilliMosaic";
+            cropScore = 0.64;
+            symptomScore = 0.17;
+
+            if (
+                color === "mixed" ||
+                color === "yellowgreen"
+            ) {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+    }
+
+
+    /* CUCUMBER */
+
+    else if (crop === "cucumber") {
+
+        if (
+            symptom === "powder" ||
+            symptom === "mildew" ||
+            symptom === "whitespots"
+        ) {
+
+            diseaseKey = "cucumberMildew";
+            cropScore = 0.66;
+            symptomScore = 0.17;
+
+            if (color === "white") {
+                colorScore = 0.10;
+            }
+            else {
+                colorScore = 0.04;
+            }
+        }
+    }
+
+
+    /* =========================================
+       GENERIC RULES FOR OTHER CROPS
+    ========================================= */
+
+    if (diseaseKey === "uncertain") {
+
+        if (
+            symptom === "brownspots" ||
+            symptom === "blackspots" ||
+            symptom === "circular" ||
+            symptom === "smallspots" ||
+            symptom === "yellowspots"
+        ) {
+
+            diseaseKey = "genericSpot";
+
+            cropScore = 0.50;
+            symptomScore = 0.13;
+
+            if (
+                color === "brown" ||
+                color === "black" ||
+                color === "yellow"
+            ) {
+                colorScore = 0.07;
+            }
+            else {
+                colorScore = 0.03;
+            }
+        }
+
+        else if (
+            symptom === "powder" ||
+            symptom === "mildew" ||
+            symptom === "whitespots"
+        ) {
+
+            diseaseKey = "genericMildew";
+
+            cropScore = 0.52;
+            symptomScore = 0.13;
+
+            if (color === "white") {
+                colorScore = 0.07;
+            }
+            else {
+                colorScore = 0.03;
+            }
+        }
+
+        else {
+
+            cropScore = 0.43;
+            symptomScore = 0.07;
+            colorScore = 0.04;
+        }
+    }
+
+
+    /* =========================================
+       2. DAMAGE LEVEL SCORE
+    ========================================= */
+
+    if (diseaseKey !== "healthy") {
+
+        if (damage === "verylow") {
+            damageScore = 0.01;
+        }
+
+        else if (damage === "low") {
+            damageScore = 0.02;
+        }
+
+        else if (damage === "medium") {
+            damageScore = 0.04;
+        }
+
+        else if (damage === "high") {
+            damageScore = 0.05;
+        }
+
+        else if (damage === "severe") {
+            damageScore = 0.06;
+        }
+    }
+
+
+    /* =========================================
+       3. CALCULATE PREDICTION VALUE
+
+       Prediction =
+       Crop Score
+       + Color Score
+       + Symptom Score
+       + Damage Score
+    ========================================= */
+
+    let predictionValue =
+        cropScore +
+        colorScore +
+        symptomScore +
+        damageScore;
+
+
+    /* Maximum 0.99 */
+
+    predictionValue =
+        Math.min(predictionValue, 0.99);
+
+
+    /* =========================================
+       4. CONFIDENCE PERCENTAGE
+    ========================================= */
+
+    const confidence =
+        predictionValue * 100;
+
+
+    /* =========================================
+       5. GET DISEASE NAME
+    ========================================= */
+
+    const diseaseName =
+        diseases[diseaseKey][lang];
+
+
+    const cropSelect =
+        document.getElementById("crop");
+
+
+    const cropName =
+        cropSelect.options[
+            cropSelect.selectedIndex
+        ].text;
+
+
+    /* =========================================
+       6. DISPLAY OUTPUT
+    ========================================= */
+
+    document.getElementById("cropOutput").innerText =
+        cropName;
+
+
+    document.getElementById("diseaseOutput").innerText =
+        diseaseName;
+
+
+    document.getElementById("valueOutput").innerText =
+        predictionValue.toFixed(2);
+
+
+    document.getElementById("confidenceOutput").innerText =
+        confidence.toFixed(2) + "%";
+
+
+    document.getElementById("confidenceBar").style.width =
+        confidence + "%";
+
+
+    /* SHOW CALCULATION */
+
+    document.getElementById("scoreOutput").innerHTML =
+
+        "Crop score = " +
+        cropScore.toFixed(2) +
+
+        "<br>Color score = " +
+        colorScore.toFixed(2) +
+
+        "<br>Symptom score = " +
+        symptomScore.toFixed(2) +
+
+        "<br>Damage score = " +
+        damageScore.toFixed(2) +
+
+        "<br><br><strong>Final = " +
+        predictionValue.toFixed(2) +
+        "</strong>";
+
+
+    /* =========================================
+       7. GUIDANCE
+    ========================================= */
+
+    if (diseaseKey === "healthy") {
+
+        document.getElementById("guidanceOutput").innerText =
+            guidance.healthy[lang];
+    }
+
+    else if (diseaseKey === "uncertain") {
+
+        document.getElementById("guidanceOutput").innerText =
+            guidance.uncertain[lang];
+    }
+
+    else {
+
+        document.getElementById("guidanceOutput").innerText =
+            guidance.disease[lang];
+    }
+
+
+    /* =========================================
+       8. CONFIDENCE STATUS
+    ========================================= */
+
+    if (confidence >= 80) {
+
+        document.getElementById("statusOutput").innerText =
+            text[lang].high;
+    }
+
+    else if (confidence >= 65) {
+
+        document.getElementById("statusOutput").innerText =
+            text[lang].medium;
+    }
+
+    else {
+
+        document.getElementById("statusOutput").innerText =
+            text[lang].low;
+    }
+
+
+    /* =========================================
+       9. SHOW RESULT
+    ========================================= */
+
+    document.getElementById("result").style.display =
+        "block";
+
+
+    document.getElementById("result").scrollIntoView({
+        behavior: "smooth"
+    });
+}
+
+</script>
+
+</body>
+</html>
